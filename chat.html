@@ -25,15 +25,32 @@
 
         <div class="chat-window">
             <div class="chat-header" id="chatHeader">Select a chat</div>
-            <div class="messages" id="messages">
-                <p>Select a user to start chatting.</p>
-            </div>
+            <div class="messages" id="messages"></div>
             <div class="message-input">
                 <input type="text" id="message" placeholder="Type a message...">
                 <button class="send-btn" onclick="sendMessage()">➤</button>
             </div>
         </div>
     </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQgHnPTrPGRiaMm9z5bxS_XPToWkjysDo",
+            authDomain: "chatmeto-7c232.firebaseapp.com",
+            databaseURL: "https://chatmeto-7c232-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "chatmeto-7c232",
+            storageBucket: "chatmeto-7c232.firebasestorage.app",
+            messagingSenderId: "332170549035",
+            appId: "1:332170549035:web:ffea5dd965fdb3f6f5976e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+    </script>
 
     <script src="script.js"></script>
 </body>
