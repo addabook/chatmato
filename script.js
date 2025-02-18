@@ -56,16 +56,18 @@ function loadChatList(user) {
     usersArray.forEach(uid => {
         if (uid !== user) {
             let chatItem = document.createElement("div");
-            chatItem.innerText = uid;
             chatItem.className = "chat-item";
-            chatItem.onclick = () => openChat(uid);
+            chatItem.innerHTML = `<div class="chat-avatar"></div><span>${uid}</span>`;
+            chatItem.onclick = () => openChat(uid, chatItem);
             chatList.appendChild(chatItem);
         }
     });
 }
 
 // Open Chat
-function openChat(user) {
+function openChat(user, element) {
+    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('selected'));
+    element.classList.add('selected');
     document.getElementById("chatHeader").innerText = `Chat with ${user}`;
     document.getElementById("messages").innerHTML = `<p>Chat started with ${user}</p>`;
 }
@@ -76,7 +78,8 @@ function sendMessage() {
     if (msg) {
         let chatWindow = document.getElementById("messages");
         let newMsg = document.createElement("p");
-        newMsg.innerText = "You: " + msg;
+        newMsg.className = "message sent";
+        newMsg.innerText = msg;
         chatWindow.appendChild(newMsg);
         document.getElementById("message").value = "";
     }
