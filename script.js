@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, get, child } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
 
 // ✅ Firebase Configuration
 const firebaseConfig = {
@@ -50,4 +50,87 @@ window.login = function () {
 let currentUser = localStorage.getItem("loggedInUser");
 if (!currentUser && window.location.pathname.includes("chat.html")) {
     window.location.href = "index.html";
+}
+
+// ✅ Load Chat List & Show Users
+window.loadChatList = function () {
+    const chatListDiv = document.getElementById("chatList");
+    chatListDiv.innerHTML = "<p>Loading users...</p>";
+
+    get(ref(db, "users")).then((snapshot) => {
+        chatListDiv.innerHTML = ""; // Clear loading message
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                const userId = childSnapshot.key;
+
+                // Prevent showing the logged-in user in their own list
+                if (userId !== currentUser) {
+                    const chatUser = document.createElement("div");
+                    chatUser.className = "chat-user";
+                    chatUser.innerText = userId;
+                    chatUser.onclick = () => startChat(userId);
+                    chatListDiv.appendChild(chatUser);
+                }
+            });
+        } else {
+            chatListDiv.innerHTML = "<p>No users found!</p>";
+        }
+    }).catch((error) => {
+        console.error("Error loading users:", error);
+    });
+};
+
+// ✅ Start Chat With Selected User
+window.startChat = function (user) {
+    localStorage.setItem("chatWith", user);
+    window.location.href = "chatroom.html"; // Redirect to chatroom
+};
+
+// ✅ Load Messages in Real-Time
+window.loadMessages = function () {
+    const chatWith = localStorage.getItem("chatWith");
+    if (!chatWith) {
+        document.getElementById("messages").innerHTML = "<p>Select a user to chat.</p>";
+        return;
+    }
+
+    const chatID = getChatID(currentUser, chatWith);
+    const messagesRef = ref(db, "messages/" + chatID);
+
+    onChildAdded(messagesRef, (snapshot) => {
+        const message = snapshot.val();
+        displayMessage(message.sender, message.text);
+    });
+};
+
+// ✅ Send Message
+window.sendMessage = function () {
+    const messageInput = document.getElementById("message");
+    const message = messageInput.value.trim();
+    const chatWith = localStorage.getItem("chatWith");
+
+    if (message !== "" && chatWith) {
+        const chatID = getChatID(currentUser, chatWith);
+        push(ref(db, "messages/" + chatID), {
+            sender: currentUser,
+            text: message,
+            timestamp: Date.now()
+        });
+
+        messageInput.value = "";
+    }
+};
+
+// ✅ Display Messages in Chat UI
+function displayMessage(sender, text) {
+    const messagesDiv = document.getElementById("messages");
+    const messageElement = document.createElement("div");
+    messageElement.className = sender === currentUser ? "message sent" : "message received";
+    messageElement.innerText = text;
+    messagesDiv.appendChild(messageElement);
+}
+
+// ✅ Generate Chat ID (Ensures unique chat room between 2 users)
+function getChatID(user1, user2) {
+    return [user1, user2].sort().join("_");
 }
