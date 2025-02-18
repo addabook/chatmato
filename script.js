@@ -1,46 +1,47 @@
-// Sample Users
-const users = {
-    "risat27": "risat27",
-    "nafisa27": "risat27"
-};
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
 
-// Login Function
-function login() {
-    const uid = document.getElementById("uid").value;
-    const password = document.getElementById("password").value;
+// User Authentication
+let currentUser = localStorage.getItem("loggedInUser");
 
-    if (users[uid] && users[uid] === password) {
-        localStorage.setItem("loggedInUser", uid);
-        window.location.href = "chat.html";
-    } else {
-        alert("Invalid credentials!");
+// Load Messages in Real-Time
+function loadMessages(user) {
+    const chatID = getChatID(currentUser, user);
+    const messagesRef = ref(getDatabase(), "messages/" + chatID);
+
+    onChildAdded(messagesRef, (snapshot) => {
+        const message = snapshot.val();
+        displayMessage(message.sender, message.text);
+    });
+}
+
+// Send Message
+function sendMessage() {
+    const messageInput = document.getElementById("message");
+    const message = messageInput.value;
+    const receiver = document.getElementById("chatHeader").innerText.replace("Chat with ", "");
+
+    if (message.trim() !== "") {
+        const chatID = getChatID(currentUser, receiver);
+        push(ref(getDatabase(), "messages/" + chatID), {
+            sender: currentUser,
+            text: message,
+            timestamp: Date.now()
+        });
+
+        messageInput.value = "";
     }
 }
 
-// Check Auth
-function checkAuth() {
-    const user = localStorage.getItem("loggedInUser");
-    if (!user) {
-        window.location.href = "index.html";
-    } else {
-        loadChatList(user);
-    }
+// Display Messages
+function displayMessage(sender, text) {
+    const messagesDiv = document.getElementById("messages");
+    const messageElement = document.createElement("div");
+    messageElement.className = sender === currentUser ? "message sent" : "message received";
+    messageElement.innerText = text;
+    messagesDiv.appendChild(messageElement);
 }
 
-// Logout
-function logout() {
-    localStorage.removeItem("loggedInUser");
-    window.location.href = "index.html";
-}
-
-// Show Profile
-function showProfile() {
-    const user = localStorage.getItem("loggedInUser");
-    document.getElementById("profileInfo").innerText = `Username: ${user}`;
-    document.getElementById("profilePopup").style.display = "block";
-}
-
-// Close Popup
-function closePopup() {
-    document.getElementById("profilePopup").style.display = "none";
+// Generate Chat ID
+function getChatID(user1, user2) {
+    return [user1, user2].sort().join("_");
 }
