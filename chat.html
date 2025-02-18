@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatMeto - Chat</title>
+    <title>ChatMeto</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div class="header">
-        <h1 class="logo">ChatMeto</h1>
+        <h1>ChatMeto</h1>
         <nav>
             <a href="chat.html">Chat</a>
             <a href="settings.html">Settings</a>
@@ -17,22 +17,25 @@
     </div>
 
     <div class="chat-container">
-        <div class="sidebar">
+        <div class="chat-list">
             <h2>Chats</h2>
             <input type="text" id="search" placeholder="Search">
             <div id="chatList"></div>
         </div>
 
         <div class="chat-box">
-            <h2 id="chatHeader">Select a chat</h2>
-            <div id="messages"></div>
-            <div class="message-input">
+            <div class="chat-header">
+                <h2 id="chatHeader">Select a chat</h2>
+            </div>
+            <div id="messages" class="messages"></div>
+            <div class="chat-input">
                 <input type="text" id="message" placeholder="Type a message...">
-                <button onclick="sendMessage()">Send</button>
+                <button class="send-btn" onclick="sendMessage()">➤</button>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
+
 </body>
 </html>
