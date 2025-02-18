@@ -8,34 +8,27 @@
 </head>
 <body>
 
-    <div class="header">
-        <h1>ChatMeto</h1>
-        <nav>
-            <a href="chat.html">Chat</a>
-            <a href="settings.html">Settings</a>
-        </nav>
-    </div>
-
     <div class="chat-container">
-        <div class="chat-list">
+        <div class="sidebar">
             <h2>Chats</h2>
             <input type="text" id="search" placeholder="Search">
             <div id="chatList"></div>
         </div>
 
-        <div class="chat-box">
+        <div class="chat-area">
             <div class="chat-header">
-                <h2 id="chatHeader">Select a chat</h2>
+                <span id="chatHeader">Select a chat</span>
             </div>
-            <div id="messages" class="messages"></div>
+            <div class="chat-box" id="messages"></div>
             <div class="chat-input">
                 <input type="text" id="message" placeholder="Type a message...">
-                <button class="send-btn" onclick="sendMessage()">➤</button>
+                <button onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Firebase & Script -->
+    <script type="module" src="script.js"></script>
 
 </body>
 </html>
