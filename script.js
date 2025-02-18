@@ -54,7 +54,7 @@ function loadChatList(user) {
 
     const usersArray = Object.keys(users);
     usersArray.forEach(uid => {
-        if (uid !== user) { // Don't show the logged-in user
+        if (uid !== user) {
             let chatItem = document.createElement("div");
             chatItem.innerText = uid;
             chatItem.className = "chat-item";
@@ -64,12 +64,13 @@ function loadChatList(user) {
     });
 }
 
-// Dummy function to open chat
+// Open Chat
 function openChat(user) {
-    document.getElementById("messages").innerHTML = `<p>Chat with ${user}</p>`;
+    document.getElementById("chatHeader").innerText = `Chat with ${user}`;
+    document.getElementById("messages").innerHTML = `<p>Chat started with ${user}</p>`;
 }
 
-// Dummy function to send message
+// Send Message
 function sendMessage() {
     let msg = document.getElementById("message").value;
     if (msg) {
