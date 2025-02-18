@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
 
-// ✅ Firebase Configuration
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCQgHnPTrPGRiaMm9z5bxS_XPToWkjysDo",
     authDomain: "chatmeto-7c232.firebaseapp.com",
@@ -12,47 +12,17 @@ const firebaseConfig = {
     appId: "1:332170549035:web:ffea5dd965fdb3f6f5976e"
 };
 
-// ✅ Initialize Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ✅ Global Login Function
-window.login = function () {
-    const uid = document.getElementById("uid").value.trim();
-    const password = document.getElementById("password").value.trim();
-
-    if (uid === "" || password === "") {
-        alert("❌ Please enter both User ID and Password!");
-        return;
-    }
-
-    const usersRef = ref(db, "users/" + uid);
-
-    get(usersRef).then((snapshot) => {
-        if (snapshot.exists()) {
-            const userData = snapshot.val();
-            if (userData.password === password) {
-                localStorage.setItem("loggedInUser", uid);
-                window.location.href = "chat.html"; // Redirect to chat page
-            } else {
-                alert("❌ Incorrect Password!");
-            }
-        } else {
-            alert("❌ User not found!");
-        }
-    }).catch((error) => {
-        console.error("Firebase Error:", error);
-        alert("⚠ Error connecting to the database!");
-    });
-};
-
-// ✅ Ensure User is Logged In
+// Ensure User is Logged In
 let currentUser = localStorage.getItem("loggedInUser");
-if (!currentUser && window.location.pathname.includes("chat.html")) {
+if (!currentUser) {
     window.location.href = "index.html";
 }
 
-// ✅ Load Users in Chat List
+// Load Chat List
 function loadChatList() {
     const chatListDiv = document.getElementById("chatList");
     chatListDiv.innerHTML = "";
@@ -64,6 +34,7 @@ function loadChatList() {
                     const chatUser = document.createElement("div");
                     chatUser.className = "chat-user";
                     chatUser.innerText = user.key;
+                    chatUser.setAttribute("data-user", user.key);
                     chatUser.onclick = () => startChat(user.key);
                     chatListDiv.appendChild(chatUser);
                 }
@@ -72,7 +43,18 @@ function loadChatList() {
     });
 }
 
-// ✅ Load Messages in Real-Time
+// Start Chat
+function startChat(user) {
+    document.getElementById("chatHeader").innerText = "Chat with " + user;
+
+    document.querySelectorAll(".chat-user").forEach(el => el.classList.remove("active"));
+    document.querySelector(`.chat-user[data-user='${user}']`).classList.add("active");
+
+    localStorage.setItem("currentChatUser", user);
+    loadMessages(user);
+}
+
+// Load Messages in Real-Time
 function loadMessages(user) {
     const chatID = getChatID(currentUser, user);
     const messagesRef = ref(db, "messages/" + chatID);
@@ -83,13 +65,13 @@ function loadMessages(user) {
     });
 }
 
-// ✅ Send Message
-window.sendMessage = function () {
+// Send Message
+function sendMessage() {
     const messageInput = document.getElementById("message");
     const message = messageInput.value;
-    const receiver = document.getElementById("chatHeader").innerText.replace("Chat with ", "");
+    const receiver = localStorage.getItem("currentChatUser");
 
-    if (message.trim() !== "") {
+    if (message.trim() !== "" && receiver) {
         const chatID = getChatID(currentUser, receiver);
         push(ref(db, "messages/" + chatID), {
             sender: currentUser,
@@ -99,9 +81,9 @@ window.sendMessage = function () {
 
         messageInput.value = "";
     }
-};
+}
 
-// ✅ Display Messages
+// Display Messages
 function displayMessage(sender, text) {
     const messagesDiv = document.getElementById("messages");
     const messageElement = document.createElement("div");
@@ -110,12 +92,10 @@ function displayMessage(sender, text) {
     messagesDiv.appendChild(messageElement);
 }
 
-// ✅ Generate Chat ID
+// Generate Chat ID
 function getChatID(user1, user2) {
     return [user1, user2].sort().join("_");
 }
 
-// ✅ Load Chat List on Page Load
-if (window.location.pathname.includes("chat.html")) {
-    loadChatList();
-}
+// Load chat users on page load
+loadChatList();
