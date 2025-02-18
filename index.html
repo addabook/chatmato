@@ -19,8 +19,8 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-        import { getDatabase } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
-      
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyCQgHnPTrPGRiaMm9z5bxS_XPToWkjysDo",
             authDomain: "chatmeto-7c232.firebaseapp.com",
@@ -33,8 +33,30 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
+        function login() {
+            const uid = document.getElementById("uid").value;
+            const password = document.getElementById("password").value;
+
+            const usersRef = ref(db, "users/" + uid);
+
+            get(usersRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    if (userData.password === password) {
+                        localStorage.setItem("loggedInUser", uid);
+                        window.location.href = "chat.html";
+                    } else {
+                        alert("Incorrect Password!");
+                    }
+                } else {
+                    alert("User not found!");
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        }
     </script>
 
-    <script src="script.js"></script>
 </body>
 </html>
