@@ -17,12 +17,18 @@
     </div>
 
     <div class="chat-container">
-        <div class="chat-list" id="chatList">
-            <!-- Chat list will be dynamically added here -->
+        <!-- Left Sidebar: Chat List -->
+        <div class="chat-list">
+            <h3>Chats</h3>
+            <input type="text" placeholder="Search" class="search-bar">
+            <div id="chatList"></div>
         </div>
+
+        <!-- Right Side: Chat Window -->
         <div class="chat-window">
+            <div class="chat-header" id="chatHeader">Select a chat</div>
             <div class="messages" id="messages">
-                <p>Select a chat to start messaging.</p>
+                <p>Select a user to start chatting.</p>
             </div>
             <div class="message-input">
                 <input type="text" id="message" placeholder="Type a message...">
