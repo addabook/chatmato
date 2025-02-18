@@ -1,0 +1,81 @@
+body {
+    font-family: Arial, sans-serif;
+    background: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+.login-container, .settings-container {
+    margin-top: 100px;
+}
+
+input, button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    width: 80%;
+    max-width: 300px;
+}
+
+button {
+    background-color: yellow;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: orange;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: black;
+    color: yellow;
+}
+
+.navbar a {
+    color: yellow;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.navbar a.active {
+    font-weight: bold;
+}
+
+.chat-container {
+    display: flex;
+    height: 80vh;
+}
+
+.chat-list {
+    width: 30%;
+    border-right: 2px solid gray;
+    overflow-y: auto;
+}
+
+.chat-window {
+    width: 70%;
+}
+
+.message-input {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+    background: white;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border: 2px solid black;
+}
