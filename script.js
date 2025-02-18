@@ -16,13 +16,43 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// ✅ Global Login Function
+window.login = function () {
+    const uid = document.getElementById("uid").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (uid === "" || password === "") {
+        alert("❌ Please enter both User ID and Password!");
+        return;
+    }
+
+    const usersRef = ref(db, "users/" + uid);
+
+    get(usersRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            if (userData.password === password) {
+                localStorage.setItem("loggedInUser", uid);
+                window.location.href = "chat.html"; // Redirect to chat page
+            } else {
+                alert("❌ Incorrect Password!");
+            }
+        } else {
+            alert("❌ User not found!");
+        }
+    }).catch((error) => {
+        console.error("Firebase Error:", error);
+        alert("⚠ Error connecting to the database!");
+    });
+};
+
 // ✅ Ensure User is Logged In
 let currentUser = localStorage.getItem("loggedInUser");
 if (!currentUser && window.location.pathname.includes("chat.html")) {
     window.location.href = "index.html";
 }
 
-// ✅ Load Chat Users
+// ✅ Load Users in Chat List
 function loadChatList() {
     const chatListDiv = document.getElementById("chatList");
     chatListDiv.innerHTML = "";
@@ -42,33 +72,50 @@ function loadChatList() {
     });
 }
 
+// ✅ Load Messages in Real-Time
+function loadMessages(user) {
+    const chatID = getChatID(currentUser, user);
+    const messagesRef = ref(db, "messages/" + chatID);
+
+    onChildAdded(messagesRef, (snapshot) => {
+        const message = snapshot.val();
+        displayMessage(message.sender, message.text);
+    });
+}
+
 // ✅ Send Message
 window.sendMessage = function () {
     const messageInput = document.getElementById("message");
-    const message = messageInput.value.trim();
+    const message = messageInput.value;
     const receiver = document.getElementById("chatHeader").innerText.replace("Chat with ", "");
 
-    if (message === "") {
-        alert("❌ Message cannot be empty!");
-        return;
+    if (message.trim() !== "") {
+        const chatID = getChatID(currentUser, receiver);
+        push(ref(db, "messages/" + chatID), {
+            sender: currentUser,
+            text: message,
+            timestamp: Date.now()
+        });
+
+        messageInput.value = "";
     }
-
-    if (!receiver || receiver === "Select a chat") {
-        alert("❌ Please select a user to chat with!");
-        return;
-    }
-
-    push(ref(db, `messages/${currentUser}_${receiver}`), {
-        sender: currentUser,
-        text: message,
-        timestamp: Date.now()
-    });
-
-    messageInput.value = "";
 };
 
-// ✅ Logout Function
-window.logout = function () {
-    localStorage.removeItem("loggedInUser");
-    window.location.href = "index.html";
-};
+// ✅ Display Messages
+function displayMessage(sender, text) {
+    const messagesDiv = document.getElementById("messages");
+    const messageElement = document.createElement("div");
+    messageElement.className = sender === currentUser ? "message sent" : "message received";
+    messageElement.innerText = text;
+    messagesDiv.appendChild(messageElement);
+}
+
+// ✅ Generate Chat ID
+function getChatID(user1, user2) {
+    return [user1, user2].sort().join("_");
+}
+
+// ✅ Load Chat List on Page Load
+if (window.location.pathname.includes("chat.html")) {
+    loadChatList();
+}
