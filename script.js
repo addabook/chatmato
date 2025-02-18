@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
 
-// Firebase Configuration
+// ✅ Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCQgHnPTrPGRiaMm9z5bxS_XPToWkjysDo",
     authDomain: "chatmeto-7c232.firebaseapp.com",
@@ -12,17 +12,48 @@ const firebaseConfig = {
     appId: "1:332170549035:web:ffea5dd965fdb3f6f5976e"
 };
 
+// ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Ensure User is Logged In
+// ✅ Global Login Function (Fixes "login is not defined" error)
+window.login = function () {
+    const uid = document.getElementById("uid").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (uid === "" || password === "") {
+        alert("❌ Please enter both User ID and Password!");
+        return;
+    }
+
+    const usersRef = ref(db, "users/" + uid);
+
+    get(usersRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            if (userData.password === password) {
+                localStorage.setItem("loggedInUser", uid);
+                window.location.href = "chat.html"; // Redirect to chat page
+            } else {
+                alert("❌ Incorrect Password!");
+            }
+        } else {
+            alert("❌ User not found!");
+        }
+    }).catch((error) => {
+        console.error("Firebase Error:", error);
+        alert("⚠ Error connecting to the database!");
+    });
+};
+
+// ✅ Ensure User is Logged In for Chat
 let currentUser = localStorage.getItem("loggedInUser");
-if (!currentUser) {
+if (!currentUser && window.location.pathname.includes("chat.html")) {
     window.location.href = "index.html";
 }
 
-// Load Chat List
-function loadChatList() {
+// ✅ Load Chat List
+window.loadChatList = function () {
     const chatListDiv = document.getElementById("chatList");
     chatListDiv.innerHTML = "";
 
@@ -39,10 +70,10 @@ function loadChatList() {
             });
         }
     });
-}
+};
 
-// Load Messages in Real-Time
-function loadMessages(user) {
+// ✅ Load Messages in Real-Time
+window.loadMessages = function (user) {
     const chatID = getChatID(currentUser, user);
     const messagesRef = ref(db, "messages/" + chatID);
 
@@ -50,10 +81,10 @@ function loadMessages(user) {
         const message = snapshot.val();
         displayMessage(message.sender, message.text);
     });
-}
+};
 
-// Send Message
-function sendMessage() {
+// ✅ Send Message
+window.sendMessage = function () {
     const messageInput = document.getElementById("message");
     const message = messageInput.value;
     const receiver = document.getElementById("chatHeader").innerText.replace("Chat with ", "");
@@ -68,18 +99,18 @@ function sendMessage() {
 
         messageInput.value = "";
     }
-}
+};
 
-// Display Messages
-function displayMessage(sender, text) {
+// ✅ Display Messages
+window.displayMessage = function (sender, text) {
     const messagesDiv = document.getElementById("messages");
     const messageElement = document.createElement("div");
     messageElement.className = sender === currentUser ? "message sent" : "message received";
     messageElement.innerText = text;
     messagesDiv.appendChild(messageElement);
-}
+};
 
-// Generate Chat ID
-function getChatID(user1, user2) {
+// ✅ Generate Chat ID
+window.getChatID = function (user1, user2) {
     return [user1, user2].sort().join("_");
-}
+};
