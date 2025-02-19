@@ -7,56 +7,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div class="login-container">
         <h1 class="logo">ChatMeto</h1>
         <h2>Connect with your favorite people</h2>
-        <input type="text" id="uid" placeholder="User ID">
+        <input type="text" id="uid" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="btn" onclick="login()">Continue</button>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCQgHnPTrPGRiaMm9z5bxS_XPToWkjysDo",
-            authDomain: "chatmeto-7c232.firebaseapp.com",
-            databaseURL: "https://chatmeto-7c232-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "chatmeto-7c232",
-            storageBucket: "chatmeto-7c232.firebasestorage.app",
-            messagingSenderId: "332170549035",
-            appId: "1:332170549035:web:ffea5dd965fdb3f6f5976e"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        window.login = function () {
-            const uid = document.getElementById("uid").value;
-            const password = document.getElementById("password").value;
-
-            const usersRef = ref(db, "users/" + uid);
-
-            get(usersRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    if (userData.password === password) {
-                        localStorage.setItem("loggedInUser", uid);
-                        window.location.href = "chat.html";
-                    } else {
-                        alert("Incorrect Password!");
-                    }
-                } else {
-                    alert("User not found!");
-                }
-            }).catch((error) => {
-                console.error(error);
-            });
-        };
-    </script>
-
+    <script type="module" src="script.js"></script>
 </body>
 </html>
