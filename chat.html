@@ -7,25 +7,29 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
+    <header>
+        <h1>ChatMeto</h1>
+        <nav>
+            <a href="settings.html">Settings</a>
+        </nav>
+    </header>
     <div class="chat-container">
-        <div class="sidebar">
+        <div class="chat-list">
             <h2>Chats</h2>
             <input type="text" id="search" placeholder="Search">
             <div id="chatList"></div>
         </div>
-
         <div class="chat-area">
-            <div class="chat-header" id="chatHeader">Select a chat</div>
-            <div class="chat-box" id="messages"></div>
-            <div class="chat-input">
+            <h2 id="chatHeader">Select a chat</h2>
+            <div id="messages" class="chat-box"></div>
+            <div class="input-area">
                 <input type="text" id="message" placeholder="Type a message...">
-                <button onclick="sendMessage()">Send</button>
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
     <script type="module" src="script.js"></script>
-
+    <script>loadChatList();</script>
 </body>
 </html>
