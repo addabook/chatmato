@@ -1,6 +1,11 @@
+// ✅ Import Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+import { 
+    getDatabase, ref, push, onChildAdded, get, set 
+} from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+import { 
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
 
 // ✅ Firebase Configuration
 const firebaseConfig = {
@@ -13,14 +18,19 @@ const firebaseConfig = {
     appId: "1:332170549035:web:ffea5dd965fdb3f6f5976e"
 };
 
-// ✅ Initialize Firebase
+// ✅ Initialize Firebase Services
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// ✅ Login Function with Firebase Authentication
+// ✅ Helper Function: Convert Email to Firebase Safe Key
+function sanitizeEmail(email) {
+    return email.replace(/\./g, ",");
+}
+
+// ✅ Login Function
 window.login = function () {
-    const email = document.getElementById("email").value.trim();
+    const email = document.getElementById("uid").value.trim();
     const password = document.getElementById("password").value.trim();
 
     if (email === "" || password === "") {
@@ -30,53 +40,24 @@ window.login = function () {
 
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            localStorage.setItem("loggedInUser", userCredential.user.uid);
-            window.location.href = "chat.html"; // Redirect to chat page
+            const sanitizedEmail = sanitizeEmail(email);
+            localStorage.setItem("loggedInUser", sanitizedEmail);
+            window.location.href = "chat.html"; // Redirect to chat
         })
         .catch((error) => {
-            alert("❌ Error: " + error.message);
+            console.error("Login Error:", error.message);
+            alert("❌ Login Failed: " + error.message);
         });
 };
 
-// ✅ Register Function (Optional)
-window.register = function () {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-
-    if (email === "" || password === "") {
-        alert("❌ Please enter both Email and Password!");
-        return;
-    }
-
-    createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            alert("✅ Registration Successful!");
-            localStorage.setItem("loggedInUser", userCredential.user.uid);
-            window.location.href = "chat.html"; // Redirect to chat page
-        })
-        .catch((error) => {
-            alert("❌ Error: " + error.message);
-        });
-};
-
-// ✅ Logout Function
-window.logout = function () {
-    signOut(auth).then(() => {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "index.html";
-    }).catch((error) => {
-        alert("❌ Error: " + error.message);
-    });
-};
-
-// ✅ Ensure User is Logged In for Chat Page
+// ✅ Ensure User is Logged In for Chat
 let currentUser = localStorage.getItem("loggedInUser");
 if (!currentUser && window.location.pathname.includes("chat.html")) {
     window.location.href = "index.html";
 }
 
-// ✅ Load Users in Chat List
-window.loadChatUsers = function () {
+// ✅ Load Chat Users in Sidebar
+function loadChatList() {
     const chatListDiv = document.getElementById("chatList");
     chatListDiv.innerHTML = "";
 
@@ -86,17 +67,29 @@ window.loadChatUsers = function () {
                 if (user.key !== currentUser) {
                     const chatUser = document.createElement("div");
                     chatUser.className = "chat-user";
-                    chatUser.innerText = user.key;
+                    chatUser.innerText = user.val().displayName || user.key;
                     chatUser.onclick = () => startChat(user.key);
                     chatListDiv.appendChild(chatUser);
                 }
             });
         }
     });
-};
+}
+
+// ✅ Start Chat with Selected User
+let selectedUser = null;
+
+function startChat(user) {
+    selectedUser = user;
+    document.getElementById("chatHeader").innerText = `Chat with ${user}`;
+    document.getElementById("messages").innerHTML = ""; // Clear previous chat
+    loadMessages(user);
+}
 
 // ✅ Load Messages in Real-Time
 function loadMessages(user) {
+    if (!user) return;
+
     const chatID = getChatID(currentUser, user);
     const messagesRef = ref(db, "messages/" + chatID);
 
@@ -106,32 +99,26 @@ function loadMessages(user) {
     });
 }
 
-// ✅ Start Chat Function (Fixes Selection & Hover Issue)
-window.startChat = function (user) {
-    document.getElementById("chatHeader").innerText = `Chat with ${user}`;
-    document.querySelectorAll(".chat-user").forEach((el) => el.classList.remove("selected"));
-    document.querySelectorAll(".chat-user").forEach((el) => {
-        if (el.innerText === user) el.classList.add("selected");
-    });
-    loadMessages(user);
-};
-
-// ✅ Send Message
+// ✅ Send Message Function
 window.sendMessage = function () {
     const messageInput = document.getElementById("message");
     const message = messageInput.value.trim();
-    const receiver = document.getElementById("chatHeader").innerText.replace("Chat with ", "");
 
-    if (message !== "") {
-        const chatID = getChatID(currentUser, receiver);
-        push(ref(db, "messages/" + chatID), {
-            sender: currentUser,
-            text: message,
-            timestamp: Date.now()
-        });
-
-        messageInput.value = "";
+    if (!selectedUser) {
+        alert("❌ Please select a user to chat with!");
+        return;
     }
+
+    if (message === "") return;
+
+    const chatID = getChatID(currentUser, selectedUser);
+    push(ref(db, "messages/" + chatID), {
+        sender: currentUser,
+        text: message,
+        timestamp: Date.now()
+    });
+
+    messageInput.value = "";
 };
 
 // ✅ Display Messages in Chat Box
@@ -146,4 +133,9 @@ function displayMessage(sender, text) {
 // ✅ Generate Unique Chat ID
 function getChatID(user1, user2) {
     return [user1, user2].sort().join("_");
+}
+
+// ✅ Load Chat List on Page Load
+if (window.location.pathname.includes("chat.html")) {
+    loadChatList();
 }
