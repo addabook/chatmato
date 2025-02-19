@@ -1,6 +1,6 @@
-// ✅ Import Firebase SDK
+// Import Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 // ✅ Firebase Configuration
@@ -20,32 +20,24 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+let selectedChatUserId = null;
+
 // ✅ Login Function
 window.login = function () {
-    const emailElement = document.getElementById("email");
-    const passwordElement = document.getElementById("password");
-
-    // ✅ Check if inputs exist
-    if (!emailElement || !passwordElement) {
-        alert("⚠️ Email or Password input not found!");
-        return;
-    }
-
-    const email = emailElement.value.trim();
-    const password = passwordElement.value.trim();
+    const email = document.getElementById("uid").value.trim();
+    const password = document.getElementById("password").value.trim();
 
     if (email === "" || password === "") {
-        alert("⚠️ Please enter both Email and Password!");
+        alert("❌ Please enter both Email and Password!");
         return;
     }
 
-    // ✅ Firebase Authentication
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             const user = userCredential.user;
             localStorage.setItem("loggedInUser", user.uid);
             alert("✅ Login Successful");
-            window.location.href = "chat.html"; // Redirect to chat page
+            window.location.href = "chat.html"; // Redirect to chat
         })
         .catch((error) => {
             console.error("❌ Login Failed:", error.code, error.message);
@@ -53,48 +45,37 @@ window.login = function () {
         });
 };
 
-// ✅ Check User Authentication on Page Load
-window.onload = function () {
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            console.log("✅ User Logged In:", user.email);
-        } else {
-            console.log("⚠️ No user is logged in");
-        }
-    });
-};
-
 // ✅ Load Chat List Function
-window.loadChatList = function () {
+export function loadChatList() {
     const userListRef = ref(db, "users");
+    const chatList = document.getElementById("chatList");
+
     get(userListRef).then((snapshot) => {
+        chatList.innerHTML = ""; // Clear previous list
         if (snapshot.exists()) {
             const users = snapshot.val();
-            const chatList = document.getElementById("chatList");
-            chatList.innerHTML = ""; // Clear existing list
-
             Object.keys(users).forEach((uid) => {
                 const userItem = document.createElement("div");
-                userItem.className = "user-item";
-                userItem.innerText = users[uid].email;
+                userItem.className = "chat-user";
+                userItem.innerText = users[uid].name || users[uid].email;
                 userItem.onclick = () => selectChat(uid);
                 chatList.appendChild(userItem);
             });
         } else {
-            console.log("⚠️ No users found");
+            chatList.innerHTML = "<p>No users found!</p>";
         }
     }).catch((error) => {
         console.error("❌ Error loading users:", error);
+        chatList.innerHTML = "<p>Error loading users!</p>";
     });
-};
+}
 
 // ✅ Select Chat Function
-let selectedChatUserId = null;
-window.selectChat = function (uid) {
+function selectChat(uid) {
     selectedChatUserId = uid;
-    document.getElementById("chatHeader").innerText = `Chat with ${uid}`;
+    document.getElementById("chatHeader").innerText = `Chat with ${uid.replace(/_/g, '.')}`;
     loadMessages(uid);
-};
+}
 
 // ✅ Send Message Function
 window.sendMessage = function () {
@@ -102,17 +83,18 @@ window.sendMessage = function () {
     const message = messageInput.value.trim();
 
     if (!selectedChatUserId) {
-        alert("⚠️ Please select a user to chat with");
+        alert("⚠ Please select a user to chat with");
         return;
     }
 
     if (message === "") {
-        alert("⚠️ Cannot send an empty message");
+        alert("⚠ Cannot send empty message");
         return;
     }
 
     const currentUser = localStorage.getItem("loggedInUser");
-    const messagesRef = ref(db, `messages/${currentUser}_${selectedChatUserId}`);
+    const sanitizedCurrentUser = currentUser.replace(/\./g, '_');
+    const messagesRef = ref(db, `messages/${sanitizedCurrentUser}_${selectedChatUserId}`);
 
     push(messagesRef, {
         sender: currentUser,
@@ -121,13 +103,14 @@ window.sendMessage = function () {
         timestamp: Date.now()
     });
 
-    messageInput.value = ""; // Clear after sending
+    messageInput.value = "";
 };
 
 // ✅ Load Messages Between Users
 function loadMessages(chatId) {
     const currentUser = localStorage.getItem("loggedInUser");
-    const messagesRef = ref(db, `messages/${currentUser}_${chatId}`);
+    const sanitizedCurrentUser = currentUser.replace(/\./g, '_');
+    const messagesRef = ref(db, `messages/${sanitizedCurrentUser}_${chatId}`);
 
     const chatBox = document.getElementById("chatBox");
     chatBox.innerHTML = ""; // Clear previous messages
@@ -135,7 +118,7 @@ function loadMessages(chatId) {
     onChildAdded(messagesRef, (snapshot) => {
         const msgData = snapshot.val();
         const msgElement = document.createElement("div");
-        msgElement.className = msgData.sender === currentUser ? "message-sent" : "message-received";
+        msgElement.className = msgData.sender === currentUser ? "message sent" : "message received";
         msgElement.innerText = msgData.message;
         chatBox.appendChild(msgElement);
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -144,7 +127,7 @@ function loadMessages(chatId) {
 
 // ✅ Logout Function
 window.logout = function () {
-    signOut(auth).then(() => {
+    auth.signOut().then(() => {
         localStorage.removeItem("loggedInUser");
         window.location.href = "index.html"; // Redirect to login
     }).catch((error) => {
