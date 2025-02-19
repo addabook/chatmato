@@ -1,6 +1,6 @@
-// Import Firebase SDK
+// ✅ Import Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 // ✅ Firebase Configuration
@@ -9,7 +9,7 @@ const firebaseConfig = {
     authDomain: "chatmeto-7c232.firebaseapp.com",
     databaseURL: "https://chatmeto-7c232-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "chatmeto-7c232",
-    storageBucket: "chatmeto-7c232.appspot.com", // ✅ Fixed storage bucket
+    storageBucket: "chatmeto-7c232.appspot.com",
     messagingSenderId: "332170549035",
     appId: "1:332170549035:web:ffea5dd965fdb3f6f5976e",
     measurementId: "G-SZ69WQGKQZ"
@@ -22,20 +22,30 @@ const db = getDatabase(app);
 
 // ✅ Login Function
 window.login = function () {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const emailElement = document.getElementById("email");
+    const passwordElement = document.getElementById("password");
 
-    if (email === "" || password === "") {
-        alert("❌ Please enter both Email and Password!");
+    // ✅ Check if inputs exist
+    if (!emailElement || !passwordElement) {
+        alert("⚠️ Email or Password input not found!");
         return;
     }
 
+    const email = emailElement.value.trim();
+    const password = passwordElement.value.trim();
+
+    if (email === "" || password === "") {
+        alert("⚠️ Please enter both Email and Password!");
+        return;
+    }
+
+    // ✅ Firebase Authentication
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             const user = userCredential.user;
             localStorage.setItem("loggedInUser", user.uid);
             alert("✅ Login Successful");
-            window.location.href = "chat.html"; // Redirect to chat
+            window.location.href = "chat.html"; // Redirect to chat page
         })
         .catch((error) => {
             console.error("❌ Login Failed:", error.code, error.message);
@@ -43,25 +53,25 @@ window.login = function () {
         });
 };
 
-// ✅ Check if User is Authenticated on Page Load
+// ✅ Check User Authentication on Page Load
 window.onload = function () {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("✅ User Logged In:", user.email);
         } else {
-            console.log("⚠ No user is logged in");
+            console.log("⚠️ No user is logged in");
         }
     });
 };
 
-// ✅ Load Users into Chat List
-function loadChatList() {
+// ✅ Load Chat List Function
+window.loadChatList = function () {
     const userListRef = ref(db, "users");
     get(userListRef).then((snapshot) => {
         if (snapshot.exists()) {
             const users = snapshot.val();
             const chatList = document.getElementById("chatList");
-            chatList.innerHTML = "";
+            chatList.innerHTML = ""; // Clear existing list
 
             Object.keys(users).forEach((uid) => {
                 const userItem = document.createElement("div");
@@ -71,21 +81,20 @@ function loadChatList() {
                 chatList.appendChild(userItem);
             });
         } else {
-            console.log("⚠ No users found");
+            console.log("⚠️ No users found");
         }
     }).catch((error) => {
         console.error("❌ Error loading users:", error);
     });
-}
+};
 
 // ✅ Select Chat Function
 let selectedChatUserId = null;
-
-function selectChat(uid) {
+window.selectChat = function (uid) {
     selectedChatUserId = uid;
     document.getElementById("chatHeader").innerText = `Chat with ${uid}`;
     loadMessages(uid);
-}
+};
 
 // ✅ Send Message Function
 window.sendMessage = function () {
@@ -93,12 +102,12 @@ window.sendMessage = function () {
     const message = messageInput.value.trim();
 
     if (!selectedChatUserId) {
-        alert("⚠ Please select a user to chat with");
+        alert("⚠️ Please select a user to chat with");
         return;
     }
 
     if (message === "") {
-        alert("⚠ Cannot send empty message");
+        alert("⚠️ Cannot send an empty message");
         return;
     }
 
@@ -112,7 +121,7 @@ window.sendMessage = function () {
         timestamp: Date.now()
     });
 
-    messageInput.value = "";
+    messageInput.value = ""; // Clear after sending
 };
 
 // ✅ Load Messages Between Users
@@ -135,7 +144,7 @@ function loadMessages(chatId) {
 
 // ✅ Logout Function
 window.logout = function () {
-    auth.signOut().then(() => {
+    signOut(auth).then(() => {
         localStorage.removeItem("loggedInUser");
         window.location.href = "index.html"; // Redirect to login
     }).catch((error) => {
