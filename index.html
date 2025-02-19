@@ -10,11 +10,14 @@
     <div class="login-container">
         <h1 class="logo">ChatMeto</h1>
         <h2>Connect with your favorite people</h2>
-        <input type="text" id="uid" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
+
+        <!-- ✅ Fixed ID from "uid" to "email" -->
+        <input type="text" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
         <button class="btn" onclick="login()">Continue</button>
     </div>
 
+    <!-- ✅ Keep script at the end for DOM readiness -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
